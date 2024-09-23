@@ -17,9 +17,7 @@ class Measurement:
 
 class MeasurementTracker():
     def __init__(self):
-        self.data = {enum.value:{} for enum in MeasType}
-
-        print(self.data)
+        self.data = {m_type:{} for m_type in MeasType}
 
     def dateTimeCorrection(self, timeStamp: float):
         if (remainder := timeStamp % 300) != 0:
@@ -27,29 +25,25 @@ class MeasurementTracker():
         return timeStamp
 
     def insert(self, measurement: Measurement):
-        print(measurement.measurementTime)
         timeframe = self.dateTimeCorrection(measurement.measurementTime.timestamp())
-        timedDada = self.data.get(timeframe)
+        timedDada = self.data[measurement.measurementType].get(timeframe)
 
-        if not timedDada:
-            self.data[timeframe] = {MeasType.SPO2: None,
-                                    MeasType.HR:   None,
-                                    MeasType.TEMP: None}
+        if not timedDada or timedDada.measurementTime < measurement.measurementTime:
+            self.data[measurement.measurementType][timeframe] = measurement
 
-            self.data[timeframe][measurement.measurementType] = measurement
-        else:
-            data_point = self.data[timeframe][measurement.measurementType]
-            if not data_point:
-                self.data[timeframe][measurement.measurementType] = measurement
-            elif self.data[timeframe][measurement.measurementType].measurementTime < measurement.measurementTime:
-                self.data[timeframe][measurement.measurementType] = measurement
+    def getOrderedData(self, m_type: MeasType):
+        return_data = []
+        for key in sorted(self.data[m_type].keys()):
+            data_point = self.data[m_type][key]
+            data_point.measurementTime = datetime.fromtimestamp(key)
+            return_data.append(data_point)
+        return return_data
 
-    # def getOrderedData(self):
-    #     # TODO: return ordered data with changed timestamps to the new ones
-    #     ordered_keys = sorted(self.data.keys())
-    #     ordered_enums = {key: [] for enum in }
-
-    #     pass
+    def getAllOrderedData(self):
+        return_data = {}
+        for m_type in MeasType:
+            return_data[m_type] = self.getOrderedData(m_type)
+        return return_data
 
 
 def inputLineToMeasurement(inputLine):
@@ -65,4 +59,4 @@ if __name__ == '__main__':
         for line in inputFile:
             m_tracker.insert(inputLineToMeasurement(line))
 
-    print(m_tracker.data)
+    print(m_tracker.getAllOrderedData())
