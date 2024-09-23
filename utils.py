@@ -14,7 +14,6 @@ class Measurement:
     measurementType: MeasType = MeasType.SPO2
     value: float = 0.0
 
-
 class MeasurementTracker():
     def __init__(self):
         self.data = {m_type:{} for m_type in MeasType}
@@ -50,13 +49,5 @@ def inputLineToMeasurement(inputLine):
     line_list = inputLine[1:].rstrip('}\n').split(', ')
     return Measurement(datetime.fromisoformat(line_list[0]), MeasType[line_list[1]], float(line_list[2]))
 
-
-if __name__ == '__main__':
-
-    m_tracker = MeasurementTracker()
-
-    with open('./input.txt') as inputFile:
-        for line in inputFile:
-            m_tracker.insert(inputLineToMeasurement(line))
-
-    print(m_tracker.getAllOrderedData())
+def measurementToOutputLine(measurement: Measurement):
+    return f'{{{measurement.measurementTime.isoformat()}, {measurement.measurementType.name}, {measurement.value}}}'
