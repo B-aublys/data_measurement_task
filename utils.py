@@ -18,10 +18,11 @@ class Measurement:
 class MeasurementTracker():
     """Tracks the latest Measurements for each 5min interval"""
     def __init__(self):
-        self.data = {m_type:{} for m_type in MeasType}
+        self.data = {}
+
 
     def dateTimeCorrection(self, timeStamp: float):
-        """Converts the given timestamp to the closest future time that is divisable by 5 mins
+        """Converts the given timestamp to the closest future time that is multiple of 5 mins
 
            Ex. 2017-01-03T10:11:03 --> 2017-01-03T10:15:00
         """
@@ -29,13 +30,19 @@ class MeasurementTracker():
             return timeStamp + timedelta(seconds=300 - remainder).total_seconds()
         return timeStamp
 
+
     def insert(self, measurement: Measurement):
         """Inserts a given Measurement into the time-series"""
         timeframe = self.dateTimeCorrection(measurement.measurementTime.timestamp())
+
+        if not self.data.get(measurement.measurementType):
+            self.data[measurement.measurementType] = {}
+
         timedDada = self.data[measurement.measurementType].get(timeframe)
 
         if not timedDada or timedDada.measurementTime < measurement.measurementTime:
             self.data[measurement.measurementType][timeframe] = measurement
+
 
     def getOrderedData(self, m_type: MeasType):
         """Returns a time ordered Measurement list of a specific MeasType"""
@@ -50,6 +57,7 @@ class MeasurementTracker():
             return_data.append(data_point)
         return return_data
 
+
     def getAllOrderedData(self):
         """Returns a dictionary containing all inputed MeasType time ordered lists of Measurements
 
@@ -57,7 +65,7 @@ class MeasurementTracker():
            data{<MeasType_1>:[Measurement, ...], <MeasType_2>:[],...}
         """
         return_data = {}
-        for m_type in MeasType:
+        for m_type in self.data.keys():
             return_data[m_type] = self.getOrderedData(m_type)
         return return_data
 
@@ -69,6 +77,7 @@ def inputLineToMeasurement(inputLine):
     """
     line_list = inputLine[1:].rstrip('}\n').split(', ')
     return Measurement(datetime.fromisoformat(line_list[0]), MeasType[line_list[1]], float(line_list[2]))
+
 
 def measurementToOutputLine(measurement: Measurement):
     """Converts a Measurement to the challange given output line str
